@@ -28,7 +28,7 @@ main = do
 rOuterRose = 1 {-in-} * pxPerIn
 --δOrig      = rOuterRose*8/1000
 δ          = rOuterRose/32
-rHanger    = 2*δ
+rHanger    = 3*δ
 
 rInnerRoseOuter = rOuterRose * 4/5 -   δ--Orig
 rOuterCircle    = rOuterRose * 2/3 - 3*δ--Orig
@@ -52,8 +52,8 @@ logoRawPath :: Path V2 Double
 logoRawPath = mconcat
   [hanger, innerCircle, outerCircle, innerRose, outerRose, lines] where
   hanger = execWriter $ do
-    tell$ circle rHanger       # translateY rOuterRose
-    tell$ circle (rHanger - δ) # translateY rOuterRose
+    tell$ circle rHanger       # translateY (rOuterRose - δ)
+    tell$ circle δ # translateY (rOuterRose - δ)
   innerCircle = execWriter $ do
     tell$ circle (rInnerCircle - δ)
     tell$ circle rInnerCircle
@@ -78,11 +78,11 @@ logo = onExplodedIntersections logoRawPath $ concat
   [hanger, innerCircle, outerCircle, innerRose, outerRose, lines] where
   on  = id
   off = lw 0
-  -- off = lc red
+  --off = lc red
   w :: _ => a -> m ()
   w = tell . (:[])
   hanger = execWriter $ do
-    w [ [on], [on], [on, off], [off, on] ]
+    w [ [on], [on], [on, off, off], [off, off, on] ]
     w [ [on], [on], [on,  on], [ on, on] ]
   innerCircle = map repeat . execWriter $ do
     w [ on, off,  on, off]
