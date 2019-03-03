@@ -1,5 +1,6 @@
 {-# LANGUAGE PartialTypeSignatures, TypeFamilies, FlexibleContexts #-}
 import Control.Monad.Writer
+import System.Environment
 import Diagrams.Prelude       hiding (width, height)
 import Diagrams.TwoD.Polygons
 import Diagrams.Backend.Cairo
@@ -21,9 +22,11 @@ dia = logo # padX (paddedWidth/width) # padY (paddedHeight/height) # lwO cutWidt
 
 pxPerIn = pxPerInSVG
 main = do
-  let dim = dims2D paddedWidth paddedHeight
-  renderCairo "compassearring.pdf" dim dia
-  renderSVG   "compassearring.svg" dim dia
+  let dim = dims $ size (out :: Dia SVG)
+  name <- getProgName
+  renderCairo (name++".pdf") dim out
+  renderSVG   (name++".svg") dim out
+
 
 rOuterRose = 1 {-in-} * pxPerIn
 --δOrig      = rOuterRose*8/1000
