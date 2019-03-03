@@ -52,7 +52,7 @@ line n = p2 (rInnerCircle - 2*δ, 0) ~~ p2 (n, 0)
 
 logoRawPath :: Path V2 Double
 logoRawPath = mconcat
-  [hanger, innerCircle, outerCircle, innerRose, outerRose, lines] where
+  [hanger, innerCircle, outerCircle, lines, innerRose, outerRose] where
   hanger = execWriter $ do
     tell$ circle rHanger       # translateY (rOuterRose - δ)
     tell$ circle δ # translateY (rOuterRose - δ)
@@ -77,7 +77,7 @@ logoRawPath = mconcat
 
 cuts :: _ => QDiagram b V2 Double Any
 cuts = onExplodedIntersections logoRawPath $ concat
-  [hanger, innerCircle, outerCircle, innerRose, outerRose, lines] where
+  [hanger, innerCircle, outerCircle, lines, innerRose, outerRose] where
   on  = id
   off = lw 0
   --off = lc red
