@@ -1,26 +1,25 @@
-{-# LANGUAGE PartialTypeSignatures, TypeFamilies, FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE PartialTypeSignatures #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 import Control.Monad.Writer
 import System.Environment
-import Diagrams.Prelude       hiding (width, height)
+import Diagrams.Prelude
 import Diagrams.TwoD.Polygons
 import Diagrams.Backend.Cairo
 import Diagrams.Backend.SVG
 import IntersectionExtras
+import LaserCutting
 
-ptPerIn      = 72
-pxPerInCairo = 72 -- cursed
-pxPerInSVG   = 96
-cutWidth     = 0.001 {-in-} * ptPerIn
-border       = 12 {-px-}
-width        = 2*rOuterRose
-height       = width + rHanger
-paddedWidth  = width  + 2*border
-paddedHeight = height + 2*border
+dia :: _ => Dia b
+dia = cuts # frame 12 # cutOn epilogZing
 
-dia :: _ => QDiagram b V2 Double Any
-dia = logo # padX (paddedWidth/width) # padY (paddedHeight/height) # lwO cutWidth
+sheet :: _ => Dia b
+sheet = tileDiagPairs (bedSize epilogZing) dia
 
-pxPerIn = pxPerInSVG
+out :: _ => Dia b
+out = sheet
+
 main = do
   let dim = dims $ size (out :: Dia SVG)
   name <- getProgName
@@ -76,8 +75,8 @@ logoRawPath = mconcat
     tell$ rot4 (line rInnerCircle # rotate (1/8 @@ turn))
     tell$ rot4 (line rInnerCircle)
 
-logo :: _ => QDiagram b V2 Double Any
-logo = onExplodedIntersections logoRawPath $ concat
+cuts :: _ => QDiagram b V2 Double Any
+cuts = onExplodedIntersections logoRawPath $ concat
   [hanger, innerCircle, outerCircle, innerRose, outerRose, lines] where
   on  = id
   off = lw 0
