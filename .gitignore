@@ -2,4 +2,7 @@
 *.o
 *.pdf
 *.svg
+dist/
+dist-newstyle/
+.ghc.environment.x86_64-linux-8.4.4
 compassearrings
