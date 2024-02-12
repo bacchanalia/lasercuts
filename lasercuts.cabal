@@ -17,22 +17,34 @@ common common
     , diagrams-cairo
     , diagrams-svg
     , mtl
-  default-language: GHC2021
-  other-extensions:
+    , relude
+  mixins:
+    , base hiding (Prelude)
+  default-language:   GHC2021
+  default-extensions:
     , BlockArguments
+    , LambdaCase
     , PartialTypeSignatures
+    , QualifiedDo
+  ghc-options:
+    -fno-warn-partial-type-signatures
+    -fno-warn-wrong-do-bind
+
+library LaserCutting
+  import:             common
+  hs-source-dirs:     src
+  exposed-modules:    LaserCutting, SemigroupDo
+  default-extensions: NoImplicitPrelude
 
 common executable
-  import:           common
-  hs-source-dirs:   app
+  import:             common
+  mixins:
+    , LaserCutting (LaserCutting as Prelude)
+    , LaserCutting
+  hs-source-dirs:     app
   build-depends:
     , LaserCutting
 
-library LaserCutting
-  import:           common
-  hs-source-dirs:   src
-  exposed-modules:  LaserCutting
-
 executable compassearrings
-  import:           executable
-  main-is:          compassearrings.hs
+  import:             executable
+  main-is:            compassearrings.hs

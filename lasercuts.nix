@@ -1,5 +1,5 @@
 { mkDerivation, base, diagrams-cairo, diagrams-contrib
-, diagrams-lib, diagrams-svg, lib, mtl
+, diagrams-lib, diagrams-svg, lib, mtl, relude
 }:
 mkDerivation {
   pname = "lasercuts";
@@ -9,9 +9,11 @@ mkDerivation {
   isExecutable = true;
   libraryHaskellDepends = [
     base diagrams-cairo diagrams-contrib diagrams-lib diagrams-svg mtl
+    relude
   ];
   executableHaskellDepends = [
     base diagrams-cairo diagrams-contrib diagrams-lib diagrams-svg mtl
+    relude
   ];
   doHaddock = false;
   homepage = "https://github.com/bacchanalia/lasercuts";
