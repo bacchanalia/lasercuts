@@ -48,3 +48,7 @@ common executable
 executable compassearrings
   import:             executable
   main-is:            compassearrings.hs
+
+executable pentagramearrings
+  import:             executable
+  main-is:            pentagramearrings.hs
