@@ -1,22 +1,19 @@
 name:                lasercuts
 version:             0.1.0.0
 synopsis:            pew pew lasers
--- description:
 homepage:            https://github.com/bacchanalia/lasercuts
 license:             GPL-3
 license-file:        LICENSE
 author:              Mike Zuser
 maintainer:          mikezuser@gmail.com
--- copyright:
--- category:
 build-type:          Simple
--- extra-source-files:  ChangeLog.md
 cabal-version:       >=1.10
 
 executable compassearrings
   main-is:             compassearrings.hs
   other-modules:       LaserCutting
-  other-extensions:    FlexibleContexts
+  other-extensions:    BlockArguments
+                     , FlexibleContexts
                      , FlexibleInstances
                      , FunctionalDependencies
                      , PartialTypeSignatures
@@ -31,5 +28,4 @@ executable compassearrings
                      , diagrams-cairo
                      , diagrams-svg
                      , mtl
-  -- hs-source-dirs:
   default-language:    Haskell2010
