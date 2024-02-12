@@ -1,31 +1,38 @@
+cabal-version:       3.0
 name:                lasercuts
 version:             0.1.0.0
 synopsis:            pew pew lasers
 homepage:            https://github.com/bacchanalia/lasercuts
-license:             GPL-3
+license:             GPL-3.0-or-later
 license-file:        LICENSE
-author:              Mike Zuser
-maintainer:          mikezuser@gmail.com
+author:              Zoe Zuser
+maintainer:          zmzuser@gmail.com
 build-type:          Simple
-cabal-version:       >=1.10
+
+common common
+  build-depends:
+    , base
+    , diagrams-lib
+    , diagrams-contrib
+    , diagrams-cairo
+    , diagrams-svg
+    , mtl
+  default-language: GHC2021
+  other-extensions:
+    , BlockArguments
+    , PartialTypeSignatures
+
+common executable
+  import:           common
+  hs-source-dirs:   app
+  build-depends:
+    , LaserCutting
+
+library LaserCutting
+  import:           common
+  hs-source-dirs:   src
+  exposed-modules:  LaserCutting
 
 executable compassearrings
-  main-is:             compassearrings.hs
-  other-modules:       LaserCutting
-  other-extensions:    BlockArguments
-                     , FlexibleContexts
-                     , FlexibleInstances
-                     , FunctionalDependencies
-                     , PartialTypeSignatures
-                     , RecordWildCards
-                     , ScopedTypeVariables
-                     , StandaloneDeriving
-                     , TypeFamilies
-                     , UndecidableInstances
-  build-depends:       base
-                     , diagrams-lib
-                     , diagrams-contrib
-                     , diagrams-cairo
-                     , diagrams-svg
-                     , mtl
-  default-language:    Haskell2010
+  import:           executable
+  main-is:          compassearrings.hs
