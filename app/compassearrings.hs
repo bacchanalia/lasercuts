@@ -9,7 +9,7 @@ sheet :: _ => Dia b
 sheet = tileDiagPairs (bedSize epilogZing) dia
 
 main :: IO ()
-main = defaultMain "compassearrings" dia
+main = defaultMain dia
 
 
 rOuterRose = 1 {-in-} * pxPerIn
@@ -34,7 +34,7 @@ rot4 p = foldMap (\α -> p # rotate (α/4 @@ turn)) [0..3]
 line n = p2 (rInnerCircle - 2*δ, 0) ~~ p2 (n, 0)
 
 
-rawPath :: Path V2 Double
+rawPath :: Path
 rawPath = fold [hanger, innerCircle, outerCircle, lines, innerRose, outerRose] where
   hanger = Semigroup.do
     circle (δ       + ε) # translateY (rOuterRose - δ)
@@ -58,7 +58,7 @@ rawPath = fold [hanger, innerCircle, outerCircle, lines, innerRose, outerRose] w
     rot4 (line rInnerCircle # rotate (1/8 @@ turn))
     rot4 (line rInnerCircle)
 
-cuts :: _ => QDiagram b V2 Double Any
+cuts :: _ => Dia b
 cuts = explodeIntersections rawPath `onSections` concat [hanger, innerCircle, outerCircle, lines, innerRose, outerRose] where
   onOff = pure . concat
         . concatMap (flip (zipWith replicate) [id, lw 0])

@@ -19,5 +19,4 @@ mkDerivation {
   homepage = "https://github.com/bacchanalia/lasercuts";
   description = "pew pew lasers";
   license = lib.licenses.gpl3Plus;
-  mainProgram = "compassearrings";
 }

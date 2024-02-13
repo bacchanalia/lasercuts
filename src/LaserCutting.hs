@@ -5,30 +5,37 @@ module LaserCutting
   , module Diagrams.TwoD.Polygons
   , module Diagrams.TwoD.Path
   , module Diagrams.TwoD.Path.IntersectionExtras
-  , Dia, defaultMain, CutterParams(..), Material(..), cutOn, epilogZing
+  , Dia, Path, Direction
+  , defaultMain, CutterParams(..), Material(..), cutOn, epilogZing
   , ptPerIn, pxPerInCairo, pxPerInSVG, pxPerIn, pxPerCm, pxPerMm, ε
   , tile, tilePairs, tileOrth, tileDiag, tileOrthPairs, tileDiagPairs
   , pathUnion, pathIntersection, pathDifference, pathExclusion
   , pathUnion', pathIntersection', pathDifference', pathExclusion'
   , pathUnionEvenOdd, pathIntersectionEvenOdd, pathDifferenceEvenOdd, pathExclusionEvenOdd
   , pathUnionEvenOdd', pathIntersectionEvenOdd', pathDifferenceEvenOdd', pathExclusionEvenOdd'
+  , (∪), (∩), (∖), (⊗)
   , ring
-  , colorWheel, lcWheel
   ) where
 import Relude hiding (First, Last, (??), getFirst, getLast, local, phantom, trace, uncons, universe)
-import Relude.Unsafe qualified as Unsafe
-import Diagrams.Prelude
+import Diagrams.Prelude                       hiding (Path, Direction)
 import Diagrams.TwoD.Offset
 import Diagrams.TwoD.Polygons
-import Diagrams.TwoD.Path
-import Diagrams.TwoD.Path.Boolean qualified as Dia
+import Diagrams.TwoD.Path                     hiding (Path)
 import Diagrams.TwoD.Path.IntersectionExtras
 import Diagrams.Backend.Cairo
+import System.Environment
+
+import Relude.Unsafe              qualified as Unsafe
+import Diagrams.Prelude           qualified as Diagrams
+import Diagrams.TwoD.Path.Boolean qualified as Dia
 
 type Dia b = QDiagram b V2 Double Any
+type Path = Diagrams.Path V2 Double
+type Direction = Diagrams.Direction V2 Double
 
-defaultMain :: String -> Dia Cairo -> IO ()
-defaultMain name out = do
+defaultMain :: Dia Cairo -> IO ()
+defaultMain out = do
+  name <- getProgName
   let render ext = renderCairo (name ++ "." ++ ext) (dims $ size out) out
   mapM_ render ["pdf", "svg", "png"]
 
@@ -90,15 +97,6 @@ tileOrthPairs sz dia = tilePairs sz (0 ^& height dia) dia
 tileDiagPairs  :: _ => V2 Double -> Dia b -> Dia b
 tileDiagPairs sz dia = tilePairs sz ((width dia/2) ^& (height dia/2)) dia
 
-matchWinding :: (Path V2 Double -> Path V2 Double) -> Path V2 Double -> Path V2 Double
-matchWinding union p
-  | p == mempty      = p
-  | isCC p == isCC u = u
-  | otherwise        = reversePath u
-  where
-    u = union p
-    isCC = isCounterclockwise . Unsafe.head . pathTrails
-
 -- | Test if a trail winds counterclockwise. May return either true or false
 --   if the trail contains portions that wind in each direction. Returns true
 --   for lines and loops with zero area.
@@ -137,61 +135,74 @@ clockwise :: RealFloat n => Located (Trail V2 n) -> Located (Trail V2 n)
 clockwise t | isCounterclockwise t = reverseLocTrail t
             | otherwise            = t
 
-pathUnion :: Path V2 Double -> Path V2 Double
-pathUnion = matchWinding $ Dia.union Winding
+-- | Force a path to wind counterclockwise.
+counterclockwiseP :: Path -> Path
+counterclockwiseP p | p == mempty                                     = mempty
+                    | isCounterclockwise . Unsafe.head $ pathTrails p = p
+                    | otherwise                                       = reversePath p
 
-pathIntersection :: Path V2 Double -> Path V2 Double -> Path V2 Double
-pathIntersection = Dia.intersection Winding
+clockwiseP :: Path -> Path
+clockwiseP p | p == mempty                              = mempty
+             | isClockwise . Unsafe.head $ pathTrails p = p
+             | otherwise                                = reversePath p
 
-pathDifference :: Path V2 Double -> Path V2 Double -> Path V2 Double
-pathDifference = Dia.difference Winding
+pathUnion :: Path -> Path
+pathUnion = counterclockwiseP . Dia.union Winding
 
-pathExclusion :: Path V2 Double -> Path V2 Double -> Path V2 Double
-pathExclusion = Dia.exclusion Winding
+pathIntersection :: Path -> Path -> Path
+pathIntersection = counterclockwiseP <<$>> Dia.intersection Winding
 
-pathUnion' :: Double -> Path V2 Double -> Path V2 Double
-pathUnion' eps = matchWinding $ Dia.union' eps Winding
+pathDifference :: Path -> Path -> Path
+pathDifference = counterclockwiseP <<$>> Dia.difference Winding
 
-pathIntersection' :: Double -> Path V2 Double -> Path V2 Double -> Path V2 Double
-pathIntersection' eps = Dia.intersection' eps Winding
+pathExclusion :: Path -> Path -> Path
+pathExclusion = counterclockwiseP <<$>> Dia.exclusion Winding
 
-pathDifference' :: Double -> Path V2 Double -> Path V2 Double -> Path V2 Double
-pathDifference' eps = Dia.difference' eps Winding
+pathUnion' :: Double -> Path -> Path
+pathUnion' eps = counterclockwiseP . Dia.union' eps Winding
 
-pathExclusion' :: Double -> Path V2 Double -> Path V2 Double -> Path V2 Double
-pathExclusion' eps = Dia.exclusion' eps Winding
+pathIntersection' :: Double -> Path -> Path -> Path
+pathIntersection' eps = counterclockwiseP <<$>> Dia.intersection' eps Winding
 
-pathUnionEvenOdd :: Path V2 Double -> Path V2 Double
-pathUnionEvenOdd = matchWinding $ Dia.union EvenOdd
+pathDifference' :: Double -> Path -> Path -> Path
+pathDifference' eps = counterclockwiseP <<$>> Dia.difference' eps Winding
 
-pathIntersectionEvenOdd :: Path V2 Double -> Path V2 Double -> Path V2 Double
-pathIntersectionEvenOdd = Dia.intersection EvenOdd
+pathExclusion' :: Double -> Path -> Path -> Path
+pathExclusion' eps = counterclockwiseP <<$>> Dia.exclusion' eps Winding
 
-pathDifferenceEvenOdd :: Path V2 Double -> Path V2 Double -> Path V2 Double
-pathDifferenceEvenOdd = Dia.difference EvenOdd
+pathUnionEvenOdd :: Path -> Path
+pathUnionEvenOdd = counterclockwiseP . Dia.union EvenOdd
 
-pathExclusionEvenOdd :: Path V2 Double -> Path V2 Double -> Path V2 Double
-pathExclusionEvenOdd = Dia.exclusion EvenOdd
+pathIntersectionEvenOdd :: Path -> Path -> Path
+pathIntersectionEvenOdd = counterclockwiseP <<$>> Dia.intersection EvenOdd
 
-pathUnionEvenOdd' :: Double -> Path V2 Double -> Path V2 Double
-pathUnionEvenOdd' eps = matchWinding $ Dia.union' eps EvenOdd
+pathDifferenceEvenOdd :: Path -> Path -> Path
+pathDifferenceEvenOdd = counterclockwiseP <<$>> Dia.difference EvenOdd
 
-pathIntersectionEvenOdd' :: Double -> Path V2 Double -> Path V2 Double -> Path V2 Double
-pathIntersectionEvenOdd' eps = Dia.intersection' eps EvenOdd
+pathExclusionEvenOdd :: Path -> Path -> Path
+pathExclusionEvenOdd = counterclockwiseP <<$>> Dia.exclusion EvenOdd
 
-pathDifferenceEvenOdd' :: Double -> Path V2 Double -> Path V2 Double -> Path V2 Double
-pathDifferenceEvenOdd' eps = Dia.difference' eps EvenOdd
+pathUnionEvenOdd' :: Double -> Path -> Path
+pathUnionEvenOdd' eps = counterclockwiseP . Dia.union' eps EvenOdd
 
-pathExclusionEvenOdd' :: Double -> Path V2 Double -> Path V2 Double -> Path V2 Double
-pathExclusionEvenOdd' eps = Dia.exclusion' eps EvenOdd
+pathIntersectionEvenOdd' :: Double -> Path -> Path -> Path
+pathIntersectionEvenOdd' eps = counterclockwiseP <<$>> Dia.intersection' eps EvenOdd
 
-ring :: Double -> Double -> Path V2 Double
+pathDifferenceEvenOdd' :: Double -> Path -> Path -> Path
+pathDifferenceEvenOdd' eps = counterclockwiseP <<$>> Dia.difference' eps EvenOdd
+
+pathExclusionEvenOdd' :: Double -> Path -> Path -> Path
+pathExclusionEvenOdd' eps = counterclockwiseP <<$>> Dia.exclusion' eps EvenOdd
+
+infixl 2 ∪
+infixl 3 ∩
+infixl 5 ∖
+infixl 6 ⊗
+(∪), (∩), (∖), (⊗) :: Path -> Path -> Path
+a ∪ b = pathUnion (a <> b)
+(∩) = pathIntersection
+(∖) = pathDifference
+(⊗) = pathExclusion
+
+ring :: Double -> Double -> Path
 ring rOuter rInner = pathDifference (circle rOuter) (circle rInner)
-
-colorWheel :: _ => [Colour a]
-colorWheel = cycle $ map sRGB24read
-  [ "#FF0000", "#FF8000", "#FFFF00", "#80FF00", "#00FF00", "#00FF80"
-  , "#00FFFF", "#0080FF", "#0000FF", "#8000FF", "#FF00FF", "#FF0080" ]
-
-lcWheel :: [Dia b -> Dia b]
-lcWheel = map lc colorWheel

@@ -26,6 +26,7 @@ common common
     , LambdaCase
     , PartialTypeSignatures
     , QualifiedDo
+    , RankNTypes
   ghc-options:
     -fno-warn-partial-type-signatures
     -fno-warn-wrong-do-bind
@@ -48,6 +49,10 @@ common executable
 executable compassearrings
   import:             executable
   main-is:            compassearrings.hs
+
+executable compassearrings-v2
+  import:             executable
+  main-is:            compassearrings-v2.hs
 
 executable pentagramearrings
   import:             executable
