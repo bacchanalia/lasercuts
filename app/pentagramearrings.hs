@@ -27,4 +27,4 @@ hangerOuter = circle rHangerOuter # translateY (rRing + rHangerInner)
 hangerInner = circle rHangerInner # translateY (rRing + rHangerInner)
 
 -- It
-path = (hangerOuter ∪ ringOuter) ∖ (hangerInner ∪ ringInner ∖ thickStar)
+path = hangerOuter ∪ ringOuter ∖ hangerInner ∪ (ringInner ∖ thickStar)

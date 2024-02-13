@@ -13,7 +13,8 @@ module LaserCutting
   , pathUnion', pathIntersection', pathDifference', pathExclusion'
   , pathUnionEvenOdd, pathIntersectionEvenOdd, pathDifferenceEvenOdd, pathExclusionEvenOdd
   , pathUnionEvenOdd', pathIntersectionEvenOdd', pathDifferenceEvenOdd', pathExclusionEvenOdd'
-  , (∪), (∩), (∖), (⊗)
+  , (∪), (∩), (∖), (⊕), (⋓), (⋒), (∖∖), (⊛)
+  , counterclockwise, clockwise
   , ring
   ) where
 import Relude hiding (First, Last, (??), getFirst, getLast, local, phantom, trace, uncons, universe)
@@ -97,18 +98,16 @@ tileOrthPairs sz dia = tilePairs sz (0 ^& height dia) dia
 tileDiagPairs  :: _ => V2 Double -> Dia b -> Dia b
 tileDiagPairs sz dia = tilePairs sz ((width dia/2) ^& (height dia/2)) dia
 
--- | Test if a trail winds counterclockwise. May return either true or false
---   if the trail contains portions that wind in each direction. Returns true
---   for lines and loops with zero area.
-isCounterclockwise :: RealFloat n => Located (Trail V2 n) -> Bool
-isCounterclockwise t = w > 0 || w == 0 && any (> 0) ws where
+-- Test if a trail winds counterclockwise. May return either true or false
+-- if the trail contains portions that wind in each direction. Returns true
+-- for lines and loops with zero area.
+isCounterclockwiseT :: RealFloat n => Located (Trail V2 n) -> Bool
+isCounterclockwiseT t = w > 0 || w == 0 && any (> 0) ws where
   w  = sample t (atStart t)
   ws = resample t
 
-isClockwise :: RealFloat n => Located (Trail V2 n) -> Bool
-isClockwise t = w < 0 || w == 0 && any (< 0) ws where
-  w  = sample t (atStart t)
-  ws = resample t
+isClockwiseT :: RealFloat n => Located (Trail V2 n) -> Bool
+isClockwiseT = not . isCounterclockwiseT
 
 resample :: RealFloat n => Located (Trail V2 n) -> [Crossings]
 resample t = if null segs then [0] else windings where
@@ -124,85 +123,78 @@ resample t = if null segs then [0] else windings where
   -- Some point along the trace must be in the loop.
   windings = map (sample t) $ zipWith (\p q -> (p+q)/2) traced (Unsafe.tail traced)
 
+isCounterclockwise :: Path -> Bool
+isCounterclockwise p = p == mempty || (isCounterclockwiseT . Unsafe.head . pathTrails) p
 
--- | Force a trail to wind counterclockwise.
-counterclockwise :: RealFloat n => Located (Trail V2 n) -> Located (Trail V2 n)
-counterclockwise t | isClockwise t = reverseLocTrail t
-                   | otherwise     = t
+isClockwise :: Path -> Bool
+isClockwise = not . isCounterclockwise
 
--- | Force a trail to wind clockwise.
-clockwise :: RealFloat n => Located (Trail V2 n) -> Located (Trail V2 n)
-clockwise t | isCounterclockwise t = reverseLocTrail t
-            | otherwise            = t
+counterclockwise :: Path -> Path
+counterclockwise p = if isCounterclockwise p then p else reversePath p
 
--- | Force a path to wind counterclockwise.
-counterclockwiseP :: Path -> Path
-counterclockwiseP p | p == mempty                                     = mempty
-                    | isCounterclockwise . Unsafe.head $ pathTrails p = p
-                    | otherwise                                       = reversePath p
+clockwise :: Path -> Path
+clockwise p = if isClockwise p then p else reversePath p
 
-clockwiseP :: Path -> Path
-clockwiseP p | p == mempty                              = mempty
-             | isClockwise . Unsafe.head $ pathTrails p = p
-             | otherwise                                = reversePath p
-
-pathUnion :: Path -> Path
-pathUnion = counterclockwiseP . Dia.union Winding
+pathUnion :: Path -> Path -> Path
+pathUnion a b = counterclockwise $ Dia.union Winding (a <> b)
 
 pathIntersection :: Path -> Path -> Path
-pathIntersection = counterclockwiseP <<$>> Dia.intersection Winding
+pathIntersection = counterclockwise <<$>> Dia.intersection Winding
 
 pathDifference :: Path -> Path -> Path
-pathDifference = counterclockwiseP <<$>> Dia.difference Winding
+pathDifference = counterclockwise <<$>> Dia.difference Winding
 
 pathExclusion :: Path -> Path -> Path
-pathExclusion = counterclockwiseP <<$>> Dia.exclusion Winding
+pathExclusion = counterclockwise <<$>> Dia.exclusion Winding
 
-pathUnion' :: Double -> Path -> Path
-pathUnion' eps = counterclockwiseP . Dia.union' eps Winding
+pathUnion' :: Double -> Path -> Path -> Path
+pathUnion' eps a b = counterclockwise $ Dia.union' eps Winding (a <> b)
 
 pathIntersection' :: Double -> Path -> Path -> Path
-pathIntersection' eps = counterclockwiseP <<$>> Dia.intersection' eps Winding
+pathIntersection' eps = counterclockwise <<$>> Dia.intersection' eps Winding
 
 pathDifference' :: Double -> Path -> Path -> Path
-pathDifference' eps = counterclockwiseP <<$>> Dia.difference' eps Winding
+pathDifference' eps = counterclockwise <<$>> Dia.difference' eps Winding
 
 pathExclusion' :: Double -> Path -> Path -> Path
-pathExclusion' eps = counterclockwiseP <<$>> Dia.exclusion' eps Winding
+pathExclusion' eps = counterclockwise <<$>> Dia.exclusion' eps Winding
 
-pathUnionEvenOdd :: Path -> Path
-pathUnionEvenOdd = counterclockwiseP . Dia.union EvenOdd
+pathUnionEvenOdd :: Path -> Path -> Path
+pathUnionEvenOdd a b = counterclockwise $ Dia.union EvenOdd (a <> b)
 
 pathIntersectionEvenOdd :: Path -> Path -> Path
-pathIntersectionEvenOdd = counterclockwiseP <<$>> Dia.intersection EvenOdd
+pathIntersectionEvenOdd = counterclockwise <<$>> Dia.intersection EvenOdd
 
 pathDifferenceEvenOdd :: Path -> Path -> Path
-pathDifferenceEvenOdd = counterclockwiseP <<$>> Dia.difference EvenOdd
+pathDifferenceEvenOdd = counterclockwise <<$>> Dia.difference EvenOdd
 
 pathExclusionEvenOdd :: Path -> Path -> Path
-pathExclusionEvenOdd = counterclockwiseP <<$>> Dia.exclusion EvenOdd
+pathExclusionEvenOdd = counterclockwise <<$>> Dia.exclusion EvenOdd
 
-pathUnionEvenOdd' :: Double -> Path -> Path
-pathUnionEvenOdd' eps = counterclockwiseP . Dia.union' eps EvenOdd
+pathUnionEvenOdd' :: Double -> Path -> Path -> Path
+pathUnionEvenOdd' eps a b = counterclockwise $ Dia.union' eps EvenOdd (a <> b)
 
 pathIntersectionEvenOdd' :: Double -> Path -> Path -> Path
-pathIntersectionEvenOdd' eps = counterclockwiseP <<$>> Dia.intersection' eps EvenOdd
+pathIntersectionEvenOdd' eps = counterclockwise <<$>> Dia.intersection' eps EvenOdd
 
 pathDifferenceEvenOdd' :: Double -> Path -> Path -> Path
-pathDifferenceEvenOdd' eps = counterclockwiseP <<$>> Dia.difference' eps EvenOdd
+pathDifferenceEvenOdd' eps = counterclockwise <<$>> Dia.difference' eps EvenOdd
 
 pathExclusionEvenOdd' :: Double -> Path -> Path -> Path
-pathExclusionEvenOdd' eps = counterclockwiseP <<$>> Dia.exclusion' eps EvenOdd
+pathExclusionEvenOdd' eps = counterclockwise <<$>> Dia.exclusion' eps EvenOdd
 
-infixl 2 ∪
-infixl 3 ∩
-infixl 5 ∖
-infixl 6 ⊗
-(∪), (∩), (∖), (⊗) :: Path -> Path -> Path
-a ∪ b = pathUnion (a <> b)
-(∩) = pathIntersection
-(∖) = pathDifference
-(⊗) = pathExclusion
+infixr 2 ∖, ∖∖
+infixr 3 ∪, ⋓
+infixr 4 ∩, ⋒, ⊕, ⊛
+(∪), (∩), (∖), (⊕), (⋓), (⋒), (∖∖), (⊛) :: Path -> Path -> Path
+(∪)  = pathUnion
+(∩)  = pathIntersection
+(∖)  = pathDifference
+(⊕)  = pathExclusion
+(⋓)  = pathUnionEvenOdd
+(⋒)  = pathIntersectionEvenOdd
+(∖∖) = pathDifferenceEvenOdd
+(⊛)  = pathExclusionEvenOdd
 
 ring :: Double -> Double -> Path
-ring rOuter rInner = pathDifference (circle rOuter) (circle rInner)
+ring rOuter rInner = circle rOuter ∖ circle rInner

@@ -34,7 +34,7 @@ rot45 :: _ => t -> t
 rot45 = rotate (1/8 @@ turn)
 
 sweep :: Path -> Path
-sweep = pathUnion . fold . take 4 . iterate (rot45 . rot45)
+sweep = pathUnion mempty . fold . take 4 . iterate (rot45 . rot45)
 
 rose :: Double -> Double -> Path
 rose r1 r2 = polygon $ PolygonOpts (PolyPolar as rs) NoOrient origin where
@@ -42,7 +42,7 @@ rose r1 r2 = polygon $ PolygonOpts (PolyPolar as rs) NoOrient origin where
   rs = cycle [r1, r2]
 
 chaff :: Path -> Path -> Path
-chaff p q = sweep $ p∖q ∩ sector where
+chaff p q = sweep $ (p∖q) ∩ sector where
   sector = wedge (radius unitX p) (rot45 xDir) (1/8 @@ turn)
 
 -- Components
@@ -60,6 +60,6 @@ orthoginalBars = sweep $ rect δ (rOuterRoseΔ + ε) # translateY (-(rOuterRose�
 diagonalBars   = sweep $ rect δ (rInnerRoseΔ + ε) # translateY (-(rInnerRoseΔ + ε)/2) # rot45
 
 -- It
-path = (hangerOuter ∪ outerRose ∪ innerRose ∪ outerRing)
-     ∖ (hangerInner ∪ outerRoseChaff ∪ innerRoseChaff ∪ innerRing)
-     ∪ orthoginalBars ∪ diagonalBars
+path = hangerOuter ∪ outerRose      ∪ innerRose      ∪ outerRing
+     ∖ hangerInner ∪ outerRoseChaff ∪ innerRoseChaff ∪ innerRing
+     ∖ orthoginalBars ∪ diagonalBars
