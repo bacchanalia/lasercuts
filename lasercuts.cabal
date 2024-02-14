@@ -18,6 +18,7 @@ common common
     , diagrams-svg
     , mtl
     , relude
+    , split
   mixins:
     , base hiding (Prelude)
   default-language:   GHC2021
@@ -30,6 +31,7 @@ common common
   ghc-options:
     -fno-warn-partial-type-signatures
     -fno-warn-wrong-do-bind
+    -O0
 
 library LaserCutting
   import:             common

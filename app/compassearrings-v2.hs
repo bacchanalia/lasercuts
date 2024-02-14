@@ -3,7 +3,7 @@ module Main where
 cutter = epilogZing
 
 dia :: _ => Dia b
-dia = path # sortTrailsRadial # stroke # frame 12 # cutOn cutter where
+dia = path # sortTrailsRadial # stroke # frame 12 # cutOn cutter
 
 sheet :: _ => Dia b
 sheet = tileDiagPairs (bedSize cutter) dia

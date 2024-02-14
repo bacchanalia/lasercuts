@@ -19,6 +19,7 @@ module LaserCutting
   , ring
   ) where
 import Relude hiding (First, Last, (??), getFirst, getLast, local, phantom, trace, uncons, universe)
+import Data.List.Split
 import Diagrams.Prelude                       hiding (Path, Direction)
 import Diagrams.TwoD.Offset
 import Diagrams.TwoD.Polygons
@@ -54,9 +55,12 @@ sortTrailsOn = sortTrailsBy . comparing
 sortTrailsRadial :: Path -> Path
 sortTrailsRadial = sortTrailsOn (view _theta . centerPoint)
 
-showCutOrder :: _ => Path -> Dia _
-showCutOrder p = cutOn epilogZing . vcat . map highlight $ pathTrails p where
-  highlight t =  (lc red . stroke) t <> (frame 12 . stroke) p
+showCutOrder :: _ => Int -> Path -> Dia _
+showCutOrder cols p = png . layout . map highlight $ pathTrails p where
+  png         = bg white . scale 10 . lw 5
+  highlight t = (lc red . stroke) t <> (frame 12 . missing) t
+  missing   t = stroke . filter (/= t) $ pathTrails p
+  layout      = vcat . map hcat . chunksOf cols
 
 data CutterParams = CutterParams
   { abstractCutWidth :: Double
