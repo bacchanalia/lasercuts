@@ -6,7 +6,7 @@ module LaserCutting
   , module Diagrams.TwoD.Path
   , module Diagrams.TwoD.Path.IntersectionExtras
   , Dia, Path, Direction
-  , defaultMain, sortTrailsBy, sortTrailsOn, sortTrailsRadial
+  , defaultMain, sortTrailsBy, sortTrailsOn, sortTrailsRadial, showCutOrder
   , CutterParams(..), Material(..), cutOn, epilogZing
   , ptPerIn, pxPerInCairo, pxPerInSVG, pxPerIn, pxPerCm, pxPerMm, ε
   , tile, tilePairs, tileOrth, tileDiag, tileOrthPairs, tileDiagPairs
@@ -53,6 +53,10 @@ sortTrailsOn = sortTrailsBy . comparing
 
 sortTrailsRadial :: Path -> Path
 sortTrailsRadial = sortTrailsOn (view _theta . centerPoint)
+
+showCutOrder :: _ => Path -> Dia _
+showCutOrder p = cutOn epilogZing . vcat . map highlight $ pathTrails p where
+  highlight t =  (lc red . stroke) t <> (frame 12 . stroke) p
 
 data CutterParams = CutterParams
   { abstractCutWidth :: Double
