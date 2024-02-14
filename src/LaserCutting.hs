@@ -6,7 +6,8 @@ module LaserCutting
   , module Diagrams.TwoD.Path
   , module Diagrams.TwoD.Path.IntersectionExtras
   , Dia, Path, Direction
-  , defaultMain, CutterParams(..), Material(..), cutOn, epilogZing
+  , defaultMain, sortTrailsBy, sortTrailsOn, sortTrailsRadial
+  , CutterParams(..), Material(..), cutOn, epilogZing
   , ptPerIn, pxPerInCairo, pxPerInSVG, pxPerIn, pxPerCm, pxPerMm, ε
   , tile, tilePairs, tileOrth, tileDiag, tileOrthPairs, tileDiagPairs
   , pathUnion, pathIntersection, pathDifference, pathExclusion
@@ -32,6 +33,7 @@ import Diagrams.TwoD.Path.Boolean qualified as Dia
 
 type Dia b = QDiagram b V2 Double Any
 type Path = Diagrams.Path V2 Double
+type LocTrail = Located (Trail V2 Double)
 type Direction = Diagrams.Direction V2 Double
 
 defaultMain :: Dia Cairo -> IO ()
@@ -39,6 +41,18 @@ defaultMain out = do
   name <- getProgName
   let render ext = renderCairo (name ++ "." ++ ext) (dims $ size out) out
   mapM_ render ["pdf", "svg", "png"]
+
+sortTrailsBy :: (LocTrail -> LocTrail -> Ordering) -> Path -> Path
+sortTrailsBy f = foldMap pathFromLocTrail . sortBy f' . pathTrails where
+  f' a b | isInsideWinding a (centerPoint b) = GT
+         | isInsideWinding b (centerPoint a) = LT
+         | otherwise = f a b
+
+sortTrailsOn :: Ord a => (LocTrail -> a) -> Path -> Path
+sortTrailsOn = sortTrailsBy . comparing
+
+sortTrailsRadial :: Path -> Path
+sortTrailsRadial = sortTrailsOn (view _theta . centerPoint)
 
 data CutterParams = CutterParams
   { abstractCutWidth :: Double

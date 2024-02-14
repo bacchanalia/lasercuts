@@ -5,7 +5,7 @@ cutter   = epilogZing
 cutPx    = cutWidth cutter material
 
 dia :: _ => Dia b
-dia = stroke path # frame 12 # cutOn cutter
+dia = path # sortTrailsRadial # stroke # frame 12 # cutOn cutter
 
 main = defaultMain dia
 

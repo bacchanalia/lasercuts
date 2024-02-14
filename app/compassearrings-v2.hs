@@ -4,7 +4,7 @@ import SemigroupDo qualified as Semigroup
 cutter = epilogZing
 
 dia :: _ => Dia b
-dia = stroke path # frame 12 # cutOn cutter
+dia = path # sortTrailsRadial # stroke # frame 12 # cutOn cutter where
 
 sheet :: _ => Dia b
 sheet = tileDiagPairs (bedSize cutter) dia
