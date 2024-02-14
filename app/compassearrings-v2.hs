@@ -1,5 +1,4 @@
 module Main where
-import SemigroupDo qualified as Semigroup
 
 cutter = epilogZing
 
